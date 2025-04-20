@@ -1,1 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>密码保护视频网站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <style>
+       .firework {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: firework 1s ease-out forwards;
+            z-index: 9999;
+        }
+
+        @keyframes firework {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--x), var(--y)) scale(3);
+                opacity: 0;
+            }
+        }
+
+       .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background-color: #fff;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: 0.5;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.5;
+            }
+        }
+
+       .hover-grow {
+            transition: transform 0.3s ease;
+        }
+
+       .hover-grow:hover {
+            transform: scale(1.05);
+        }
+
+       .disclaimer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            opacity: 0;
+        }
+
+       .disclaimer.show {
+            max-height: 500px;
+            opacity: 1;
+        }
+
+       .fullscreen-module {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+       .fullscreen-module-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80%;
+            overflow-y: auto;
+            position: relative; /* 添加相对定位 */
+        }
+
+       .button-container {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+
+       .button-container button {
+            min-width: 120px;
+        }
+
+       .game-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 50px;
+            margin-top: 100px;
+        }
+
+        /* 视频背景样式 */
+       .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+
+       .ai-chat {
+            margin-top: 20px;
+            border-top: 1px solid #ccc;
+            padding-top: 20px;
+        }
+
+       .ai-chat input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 70%;
+            margin-right: 10px;
+        }
+
+       .ai-chat button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+       .ai-chat .chat-messages {
+            margin-top: 10px;
+        }
+
+       .ai-chat .chat-messages div {
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+
+       .login-author-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+       .author-intro {
+            width: 250px;
+            background-color: #f9fafb;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+        }
+    </style>
+</head>
+
+<body class="flex justify-center items-center h-screen relative overflow-hidden" onclick="createFireworks(event)">
+    <!-- 视频背景 -->
+    <video autoplay muted loop class="video-background">
+        <source src="背景.mp4" type="video/mp4">
+        你的浏览器不支持视频播放。
+    </video>
+
+    <div id="stars"></div>
+    <div class="button-container">
+        <button id="openPasswordModule" onclick="openModule('passwordModule')"
+            class="p-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 hover:animate-shake transition-colors hover-grow">秘密功能</button>
+        <button id="openForum" onclick="openForum()"
+            class="p-3 bg-purple-500 text-white rounded-md hover:bg-purple-600 hover:animate-shake transition-colors hover-grow">进入禹坛</button>
+        <button id="loginButton" onclick="openModule('loginModule')"
+            class="p-3 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 hover:animate-shake transition-colors hover-grow">登录/注册</button>
+    </div>
+    <div id="overlay"
+        class="hidden fixed top-0 left-0 w-full h-full bg-black opacity-0 z-99 transition-opacity duration-300"></div>
+    <div id="passwordModule"
+        class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-0 opacity-0 bg-white p-8 rounded-lg shadow-2xl z-100 transition-all duration-600 ease-out">
+        <button id="backButton" onclick="closeModule('passwordModule')"
+            class="absolute top-2 right-2 p-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 hover:animate-shake transition-colors">返回</button>
+        <form id="passwordForm" onsubmit="return false;">
+            <h2 class="text-2xl font-bold mb-4">输入密码</h2>
+            <label for="passwordInput" class="block text-lg text-gray-700 mb-2">请输入密码：</label>
+            <input type="password" id="passwordInput"
+                class="p-3 border border-gray-300 rounded-md w-full outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                onkeydown="if (event.key === 'Enter') checkPassword()">
+            <button type="button" onclick="checkPassword()"
+                class="mt-5 p-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 hover:animate-shake transition-colors">确认</button>
+            <p class="text-gray-600 mt-3">你可以从哔哩哔哩宏少侠处获取密码。</p>
+        </form>
+    </div>
+    <div id="loginModule"
+        class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-0 opacity-0 bg-white p-8 rounded-lg shadow-2xl z-100 transition-all duration-400 ease-out">
+        <button id="loginBackButton" onclick="closeModule('loginModule')"
+            class="absolute top-2 right-2 p-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 hover:animate-shake transition-colors">返回</button>
+        <div class="login-author-container">
+            <form id="loginForm" onsubmit="return false;">
+                <h2 class="text-2xl font-bold mb-4">登录/注册账号</h2>
+                <label for="loginUsernameInput" class="block text-lg text-gray-700 mb-2">请输入用户名：</label>
+                <input type="text" id="loginUsernameInput"
+                    class="p-3 border border-gray-300 rounded-md w-full outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    oninput="validateUsername()">
+                <span id="usernameError" class="text-red-500 hidden">该用户名已被使用，请选择其他用户名。</span>
+                <label for="loginPasswordInput" class="block text-lg text-gray-700 mb-2">请输入密码：</label>
+                <input type="password" id="loginPasswordInput"
+                    class="p-3 border border-gray-300 rounded-md w-full outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                <label for="confirmPasswordInput" class="block text-lg text-gray-700 mb-2 hidden" id="confirmPasswordLabel">确认密码：</label>
+                <input type="password" id="confirmPasswordInput"
+                    class="p-3 border border-gray-300 rounded-md w-full outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors hidden">
+                <div class="flex space-x-4">
+                    <button type="button" onclick="loginUser()"
+                        class="mt-5 p-3 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 hover:animate-shake transition-colors">登录</button>
+                    <button type="button" onclick="toggleRegisterMode()"
+                        class="mt-5 p-3 bg-green-500 text-white rounded-md hover:bg-green-600 hover:animate-shake transition-colors" id="registerToggle">注册</button>
+                </div>
+            </form>
+            <div class="author-intro">
+                <p>嘿！这网站的作者是个十几岁的初中牲，整天闲得发慌，于是就鼓捣出了这个网站来玩玩。</p>
+                <p>要是你也没啥事儿，就去 B 站关注一下宏少侠呗，以后说不定会出搭建网站的教程哟！</p>
+            </div>
+        </div>
+    </div>
+    <button id="toggleDisclaimer"
+        class="absolute top-2 left-2 p-2 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100 hover:scale-105 transition-transform hover-grow"
+        onmouseenter="showDisclaimer()" onmouseleave="hideDisclaimer()">
+        <i class="fa-solid fa-info-circle"></i> 重要声明
+    </button>
+    <div id="disclaimer" class="disclaimer absolute top-12 left-2 w-80 bg-white border border-gray-300 p-3 rounded-md shadow-md transition-all duration-300 ease-out hover-grow">
+        <strong class="block text-base text-gray-700 mb-1">重要声明</strong>
+        1. 本站仅提供视频链接转换服务，用户所请求播放的视频内容由第三方网站提供，视频版权归原版权方所有，与本站无关。<br>
+        2. 若因视频内容引发任何版权纠纷、法律责任或其他争议，均由视频版权方及相关责任方承担，本站不承担任何直接或间接责任。<br>
+        3. 用户在使用本站服务时，应确保自身行为符合法律法规要求，不得利用本站进行任何违法违规活动。若用户违反相关规定，由此产生的一切后果由用户自行承担。<br>
+        4. 如遇不可抗力因素（如网络故障、服务器故障等）导致服务中断或异常，本站不承担责任，但将尽力采取措施恢复服务。<br>
+        5. 本站纯属娱乐，仅向用户告知相关网站信息，不保证其可用性。<br>
+        6. 当您使用本网站时，即默认接受上述所有协议条款。
+    </div>
+    <div id="urlInputModule"
+        class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-0 opacity-0 bg-white p-8 rounded-lg shadow-2xl z-100 transition-all duration-400 ease-out">
+        <button id="urlBackButton" onclick="closeModule('urlInputModule')"
+            class="absolute top-2 right-2 p-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 hover:animate-shake transition-colors">返回</button>
+        <form onsubmit="return false;">
+            <h2 class="text-2xl font-bold mb-4">输入视频网址</h2>
+            <label for="videoUrlInput" class="block text-lg text-gray-700 mb-2">把你想要看的视频的网址发给我</label>
+            <input type="text" id="videoUrlInput"
+                class="p-3 border border-gray-300 rounded-md w-full outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors">
+            <button type="button" onclick="sendVideoUrl()"
+                class="mt-5 p-3 bg-green-500 text-white rounded-md hover:bg-green-600 hover:animate-shake transition-colors">提交</button>
+            <div class="flex justify-around mt-6 space-x-4">
+                <button onclick="window.open('https://v.qq.com/', '_blank')"
+                    class="flex-1 p-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors hover-grow">腾讯视频</button>
+                <button onclick="window.open('https://www.iqiyi.com/', '_blank')"
+                    class="flex-1 p-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors hover-grow">爱奇艺</button>
+                <button onclick="window.open('https://www.youku.com/', '_blank')"
+                    class="flex-1 p-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors hover-grow">优酷</button>
+                <button onclick="window.open('https://www.bilibili.com/', '_blank')"
+                    class="flex-1 p-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors hover-grow">小破站</button>
+            </div>
+        </form>
+    </div>
+    <div id="forumModule" class="fullscreen-module">
+        <div class="fullscreen-module-content">
+            <button id="forumBackButton" onclick="closeModule('forumModule')"
+                class="absolute top-2 right-2 p-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 hover:animate-shake transition-colors" style="position: absolute; top: 10px; right: 10px;">返回</button>
+            <h2 class="text-2xl font-bold mb-4">禹坛</h2>
+            <form id="forumPostForm" onsubmit="return false;">
+                <label for="forumPostInput" class="block text-lg text-gray-700 mb-2">发表你的看法：</label>
+                <textarea id="forumPostInput" rows="4"
+                    class="p-3 border border-gray-300 rounded-md w-full outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors"></textarea>
+                <button type="button" onclick="postForumMessage()"
+                    class="mt-5 p-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 hover:animate-shake transition-colors">发表</button>
+            </form>
+            <div id="forumPosts"></div>
+            <div class="ai-chat">
+                <h3>超级 AI 聊天</h3>
+                <input type="text" id="aiInput" placeholder="向超级 AI 提问">
+                <button onclick="chatWithAI()">发送</button>
+                <div class="chat-messages" id="chatMessages"></div>
+            </div>
+        </div>
+    </div>
+    <div class="game-container">
+        <div id="tetris-game"></div>
+        <div id="2048-game"></div>
+    </div>
+
+    <!-- 引入俄罗斯方块和2048游戏的CSS和JavaScript文件 -->
+    <link rel="stylesheet" href="tetris.css">
+    <script src="tetris.js"></script>
+    <link rel="stylesheet" href="2048.css">
+    <script src="2048.js"></script>
+
+    <script>
+        function openModule(moduleId) {
+            const module = document.getElementById(moduleId);
+            const overlay = document.getElementById('overlay');
+            module.classList.remove('hidden', 'scale-0', 'opacity-0');
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                module.classList.add('scale-100', 'opacity-100');
+                overlay.classList.add('opacity-50');
+                if (moduleId === 'forumModule') {
+                    module.style.display = 'flex';
+                }
+            }, 50);
+        }
+
+        function closeModule(moduleId) {
+            const module = document.getElementById(moduleId);
+            const overlay = document.getElementById('overlay');
+            module.classList.remove('scale-100', 'opacity-100');
+            overlay.classList.remove('opacity-50');
+            setTimeout(() => {
+                module.classList.add('hidden', 'scale-0', 'opacity-0');
+                if (moduleId === 'forumModule') {
+                    module.style.display = 'none';
+                }
+                overlay.classList.add('hidden');
+            }, 300);
+        }
+
+        function checkPassword() {
+            const password = document.getElementById('passwordInput').value;
+            if (password === '123456') {
+                closeModule('passwordModule');
+                openModule('urlInputModule');
+            } else {
+                alert('密码错误，请重新输入！');
+            }
+        }
+
+        function createFireworks(event) {
+            const x = event.clientX;
+            const y = event.clientY;
+            for (let i = 0; i < 30; i++) {
+                const firework = document.createElement('div');
+                firework.classList.add('firework');
+                firework.style.left = `${x}px`;
+                firework.style.top = `${y}px`;
+                firework.style.setProperty('--x', `${(Math.random() - 0.5) * 200}px`);
+                firework.style.setProperty('--y', `${(Math.random() - 0.5) * 200}px`);
+                firework.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                document.body.appendChild(firework);
+                setTimeout(() => {
+                    firework.remove();
+                }, 1000);
+            }
+        }
+
+        function showDisclaimer() {
+            const disclaimer = document.getElementById('disclaimer');
+            disclaimer.classList.add('show');
+        }
+
+        function hideDisclaimer() {
+            const disclaimer = document.getElementById('disclaimer');
+            disclaimer.classList.remove('show');
+        }
+
+        function openForum() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            if (!isLoggedIn) {
+                openModule('loginModule');
+            } else {
+                openModule('forumModule');
+            }
+        }
+
+        function postForumMessage() {
+            const message = document.getElementById('forumPostInput').value;
+            if (message) {
+                const post = document.createElement('div');
+                post.classList.add('p-3', 'border-b', 'border-gray-300');
+                post.textContent = message;
+                document.getElementById('forumPosts').appendChild(post);
+                document.getElementById('forumPostInput').value = '';
+            }
+        }
+
+        function validateUsername() {
+            // 这里可以添加用户名验证逻辑，比如检查用户名是否已存在
+            const username = document.getElementById('loginUsernameInput').value;
+            const errorSpan = document.getElementById('usernameError');
+            if (username === 'existingUser') {
+                errorSpan.classList.remove('hidden');
+            } else {
+                errorSpan.classList.add('hidden');
+            }
+        }
+
+        function toggleRegisterMode() {
+            const confirmPasswordLabel = document.getElementById('confirmPasswordLabel');
+            const confirmPasswordInput = document.getElementById('confirmPasswordInput');
+            const registerButton = document.getElementById('registerToggle');
+            if (confirmPasswordLabel.classList.contains('hidden')) {
+                confirmPasswordLabel.classList.remove('hidden');
+                confirmPasswordInput.classList.remove('hidden');
+                registerButton.textContent = '取消注册';
+            } else {
+                confirmPasswordLabel.classList.add('hidden');
+                confirmPasswordInput.classList.add('hidden');
+                registerButton.textContent = '注册';
+            }
+        }
+
+        function loginUser() {
+            const username = document.getElementById('loginUsernameInput').value;
+            const password = document.getElementById('loginPasswordInput').value;
+            // 简单模拟登录成功
+            localStorage.setItem('isLoggedIn', true);
+            alert(`登录成功，欢迎 ${username}`);
+            closeModule('loginModule');
+        }
+
+        function sendVideoUrl() {
+            const videoUrl = document.getElementById('videoUrlInput').value;
+            if (videoUrl) {
+                alert(`你提交的视频网址是：${videoUrl}`);
+            } else {
+                alert('请输入有效的视频网址！');
+            }
+        }
+
+        function chatWithAI() {
+            const input = document.getElementById('aiInput').value;
+            const messagesDiv = document.getElementById('chatMessages');
+            const userMessage = document.createElement('div');
+            userMessage.textContent = `你: ${input}`;
+            messagesDiv.appendChild(userMessage);
+
+            // 简单的 AI 回复逻辑，这里可以替换为更复杂的逻辑
+            const aiResponse = `你问了: ${input}，这是一个有趣的问题！`;
+            const aiMessage = document.createElement('div');
+            aiMessage.textContent = `超级 AI: ${aiResponse}`;
+            messagesDiv.appendChild(aiMessage);
+
+            document.getElementById('aiInput').value = '';
+        }
+
+        // 生成星星
+        for (let i = 0; i < 100; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            star.style.left = `${Math.random() * 100}vw`;
+            star.style.top = `${Math.random() * 100}vh`;
+            star.style.animationDelay = `${Math.random() * 3}s`;
+            document.getElementById('stars').appendChild(star);
+        }
+    </script>
+</body>
+
+</html>    
