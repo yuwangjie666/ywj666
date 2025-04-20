@@ -190,6 +190,8 @@
             class="p-3 bg-purple-500 text-white rounded-md hover:bg-purple-600 hover:animate-shake transition-colors hover-grow">进入禹坛</button>
         <button id="loginButton" onclick="openModule('loginModule')"
             class="p-3 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 hover:animate-shake transition-colors hover-grow">登录/注册</button>
+        <button id="openUrlInputModule" onclick="openModule('urlInputModule')"
+            class="p-3 bg-green-500 text-white rounded-md hover:bg-green-600 hover:animate-shake transition-colors hover-grow">输入网址</button>
     </div>
     <div id="overlay"
         class="hidden fixed top-0 left-0 w-full h-full bg-black opacity-0 z-99 transition-opacity duration-300"></div>
@@ -274,6 +276,8 @@
                 <button onclick="window.open('https://www.bilibili.com/', '_blank')"
                     class="flex-1 p-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors hover-grow">小破站</button>
             </div>
+            <p id="originalUrl" class="text-gray-600 mt-3"></p>
+            <p id="combinedUrl" class="text-gray-600 mt-1"></p>
         </form>
     </div>
     <div id="forumModule" class="fullscreen-module">
@@ -297,29 +301,15 @@
             </div>
         </div>
     </div>
-    <div class="game-container">
-        <div id="tetris-game"></div>
-        <div id="2048-game"></div>
-    </div>
-
-    <!-- 引入俄罗斯方块和2048游戏的CSS和JavaScript文件 -->
-    <link rel="stylesheet" href="tetris.css">
-    <script src="tetris.js"></script>
-    <link rel="stylesheet" href="2048.css">
-    <script src="2048.js"></script>
-
     <script>
         function openModule(moduleId) {
             const module = document.getElementById(moduleId);
             const overlay = document.getElementById('overlay');
             module.classList.remove('hidden', 'scale-0', 'opacity-0');
+            module.classList.add('scale-100', 'opacity-100');
             overlay.classList.remove('hidden');
             setTimeout(() => {
-                module.classList.add('scale-100', 'opacity-100');
                 overlay.classList.add('opacity-50');
-                if (moduleId === 'forumModule') {
-                    module.style.display = 'flex';
-                }
             }, 50);
         }
 
@@ -327,42 +317,86 @@
             const module = document.getElementById(moduleId);
             const overlay = document.getElementById('overlay');
             module.classList.remove('scale-100', 'opacity-100');
+            module.classList.add('scale-0', 'opacity-0');
             overlay.classList.remove('opacity-50');
             setTimeout(() => {
-                module.classList.add('hidden', 'scale-0', 'opacity-0');
-                if (moduleId === 'forumModule') {
-                    module.style.display = 'none';
-                }
                 overlay.classList.add('hidden');
             }, 300);
         }
 
+        function openForum() {
+            openModule('forumModule');
+        }
+
         function checkPassword() {
             const password = document.getElementById('passwordInput').value;
+            // 这里可以添加实际的密码验证逻辑
+            // 假设密码正确，暂时写死密码为 '123456'
             if (password === '123456') {
                 closeModule('passwordModule');
                 openModule('urlInputModule');
             } else {
-                alert('密码错误，请重新输入！');
+                alert('密码错误，请重新输入');
             }
         }
 
-        function createFireworks(event) {
-            const x = event.clientX;
-            const y = event.clientY;
-            for (let i = 0; i < 30; i++) {
-                const firework = document.createElement('div');
-                firework.classList.add('firework');
-                firework.style.left = `${x}px`;
-                firework.style.top = `${y}px`;
-                firework.style.setProperty('--x', `${(Math.random() - 0.5) * 200}px`);
-                firework.style.setProperty('--y', `${(Math.random() - 0.5) * 200}px`);
-                firework.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
-                document.body.appendChild(firework);
-                setTimeout(() => {
-                    firework.remove();
-                }, 1000);
+        function loginUser() {
+            // 这里可以添加登录逻辑
+            alert('登录功能待实现');
+        }
+
+        function toggleRegisterMode() {
+            const confirmPasswordLabel = document.getElementById('confirmPasswordLabel');
+            const confirmPasswordInput = document.getElementById('confirmPasswordInput');
+            const registerToggle = document.getElementById('registerToggle');
+            if (confirmPasswordLabel.classList.contains('hidden')) {
+                confirmPasswordLabel.classList.remove('hidden');
+                confirmPasswordInput.classList.remove('hidden');
+                registerToggle.textContent = '取消注册';
+            } else {
+                confirmPasswordLabel.classList.add('hidden');
+                confirmPasswordInput.classList.add('hidden');
+                registerToggle.textContent = '注册';
             }
+        }
+
+        function validateUsername() {
+            // 这里可以添加用户名验证逻辑
+            alert('用户名验证功能待实现');
+        }
+
+        function sendVideoUrl() {
+            const videoUrl = document.getElementById('videoUrlInput').value;
+            if (videoUrl) {
+                const combinedUrl = 'https://jx.xmflv.cc/?url=' + videoUrl;
+                document.getElementById('originalUrl').textContent = '原始网址: ' + videoUrl;
+                document.getElementById('combinedUrl').textContent = '处理后的网址: ' + combinedUrl;
+            } else {
+                alert('请输入有效的视频网址');
+            }
+        }
+
+        function postForumMessage() {
+            // 这里可以添加发表论坛消息的逻辑
+            alert('发表论坛消息功能待实现');
+        }
+
+        function chatWithAI() {
+            // 这里可以添加与 AI 聊天的逻辑
+            alert('与 AI 聊天功能待实现');
+        }
+
+        function createFireworks(event) {
+            const firework = document.createElement('div');
+            firework.classList.add('firework');
+            firework.style.left = `${event.clientX}px`;
+            firework.style.top = `${event.clientY}px`;
+            firework.style.setProperty('--x', `${(Math.random() - 0.5) * 200}px`);
+            firework.style.setProperty('--y', `${(Math.random() - 0.5) * 200}px`);
+            document.body.appendChild(firework);
+            setTimeout(() => {
+                firework.remove();
+            }, 1000);
         }
 
         function showDisclaimer() {
@@ -373,96 +407,6 @@
         function hideDisclaimer() {
             const disclaimer = document.getElementById('disclaimer');
             disclaimer.classList.remove('show');
-        }
-
-        function openForum() {
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
-            if (!isLoggedIn) {
-                openModule('loginModule');
-            } else {
-                openModule('forumModule');
-            }
-        }
-
-        function postForumMessage() {
-            const message = document.getElementById('forumPostInput').value;
-            if (message) {
-                const post = document.createElement('div');
-                post.classList.add('p-3', 'border-b', 'border-gray-300');
-                post.textContent = message;
-                document.getElementById('forumPosts').appendChild(post);
-                document.getElementById('forumPostInput').value = '';
-            }
-        }
-
-        function validateUsername() {
-            // 这里可以添加用户名验证逻辑，比如检查用户名是否已存在
-            const username = document.getElementById('loginUsernameInput').value;
-            const errorSpan = document.getElementById('usernameError');
-            if (username === 'existingUser') {
-                errorSpan.classList.remove('hidden');
-            } else {
-                errorSpan.classList.add('hidden');
-            }
-        }
-
-        function toggleRegisterMode() {
-            const confirmPasswordLabel = document.getElementById('confirmPasswordLabel');
-            const confirmPasswordInput = document.getElementById('confirmPasswordInput');
-            const registerButton = document.getElementById('registerToggle');
-            if (confirmPasswordLabel.classList.contains('hidden')) {
-                confirmPasswordLabel.classList.remove('hidden');
-                confirmPasswordInput.classList.remove('hidden');
-                registerButton.textContent = '取消注册';
-            } else {
-                confirmPasswordLabel.classList.add('hidden');
-                confirmPasswordInput.classList.add('hidden');
-                registerButton.textContent = '注册';
-            }
-        }
-
-        function loginUser() {
-            const username = document.getElementById('loginUsernameInput').value;
-            const password = document.getElementById('loginPasswordInput').value;
-            // 简单模拟登录成功
-            localStorage.setItem('isLoggedIn', true);
-            alert(`登录成功，欢迎 ${username}`);
-            closeModule('loginModule');
-        }
-
-        function sendVideoUrl() {
-            const videoUrl = document.getElementById('videoUrlInput').value;
-            if (videoUrl) {
-                alert(`你提交的视频网址是：${videoUrl}`);
-            } else {
-                alert('请输入有效的视频网址！');
-            }
-        }
-
-        function chatWithAI() {
-            const input = document.getElementById('aiInput').value;
-            const messagesDiv = document.getElementById('chatMessages');
-            const userMessage = document.createElement('div');
-            userMessage.textContent = `你: ${input}`;
-            messagesDiv.appendChild(userMessage);
-
-            // 简单的 AI 回复逻辑，这里可以替换为更复杂的逻辑
-            const aiResponse = `你问了: ${input}，这是一个有趣的问题！`;
-            const aiMessage = document.createElement('div');
-            aiMessage.textContent = `超级 AI: ${aiResponse}`;
-            messagesDiv.appendChild(aiMessage);
-
-            document.getElementById('aiInput').value = '';
-        }
-
-        // 生成星星
-        for (let i = 0; i < 100; i++) {
-            const star = document.createElement('div');
-            star.classList.add('star');
-            star.style.left = `${Math.random() * 100}vw`;
-            star.style.top = `${Math.random() * 100}vh`;
-            star.style.animationDelay = `${Math.random() * 3}s`;
-            document.getElementById('stars').appendChild(star);
         }
     </script>
 </body>
