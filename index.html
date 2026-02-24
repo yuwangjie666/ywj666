@@ -1093,7 +1093,7 @@ chatInput.addEventListener('keydown', (e) => {
   }
 });
 
-// 🔥 优化后的聊天接口调用（秒响应，无网络异常）
+// 🔥 优化后的聊天接口调用（适配公网访问）
 function sendMessage() {
   const message = chatInput.value.trim();
   if (!message) return;
@@ -1119,8 +1119,8 @@ function sendMessage() {
   sendBtn.disabled = true;
   errorText.classList.remove('show');
   
-  // 🔥 核心修改：调用本地接口（秒响应）
-  fetch('http://localhost:3000/chat', {
+  // 🔥 核心修改：替换为CodeSandbox公网接口地址（请替换成你自己的地址）
+  fetch('https://m3x63l-3000.csb.app/chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
