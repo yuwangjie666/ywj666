@@ -113,17 +113,27 @@ header.show {
   letter-spacing: 2px;
 }
 
-/* 汉堡菜单按钮 */
+/* 汉堡菜单按钮 - 重构：最高层级+固定显示 */
 #hamburger {
   margin-left: auto;
-  width: 36px;
-  height: 36px;
+  width: 48px; /* 放大按钮 */
+  height: 48px; /* 放大按钮 */
+  background: rgba(255, 204, 0, 0.1); /* 加背景，更明显 */
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center; /* 横线居中 */
   gap: 6px;
   cursor: pointer;
-  z-index: 101;
+  z-index: 9999; /* 🔥 最高层级，不被遮挡 */
+  padding: 10px; /* 扩大热区 */
+  transition: all 0.3s ease; /* 加过渡 */
+  position: relative; /* 固定定位 */
+}
+/* 新增hover效果 */
+#hamburger:hover {
+  background: rgba(255, 204, 0, 0.2);
 }
 #hamburger span {
   width: 100%;
@@ -142,7 +152,25 @@ header.show {
   transform: translateY(-9px) rotate(-45deg);
 }
 
-/* 右侧滑出菜单 */
+/* 🔥 重构：菜单背景遮罩 */
+#menu-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  z-index: 98;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+#menu-mask.show {
+  display: block;
+  opacity: 1;
+}
+
+/* 重构：右侧滑出菜单 - 支持二级菜单 */
 #side-menu {
   position: fixed;
   top: 0;
@@ -153,17 +181,84 @@ header.show {
   backdrop-filter: blur(12px);
   padding: 100px 40px 40px;
   transition: right 0.4s cubic-bezier(0.22,1,0.36,1);
-  z-index: 99;
+  z-index: 99; /* 低于汉堡按钮，高于遮罩 */
+  overflow-y: auto;
 }
 #side-menu.open {
   right: 0;
 }
-#side-menu ul {
+#side-menu > ul {
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 28px;
 }
+/* 一级菜单样式 */
+.main-menu-item {
+  position: relative;
+}
+.main-menu-link {
+  color: #ccc;
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: 500;
+  transition: color 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.main-menu-link:hover {
+  color: #FFCC00;
+}
+.main-menu-link.active {
+  color: #FFCC00;
+  font-weight: 600;
+}
+/* 下拉箭头 */
+.arrow {
+  width: 0;
+  height: 0;
+  border-left: 6px solid #FFCC00;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  transition: transform 0.3s ease;
+}
+.arrow.rotate {
+  transform: rotate(90deg);
+}
+/* 二级菜单样式 */
+.sub-menu {
+  list-style: none;
+  margin-top: 15px;
+  margin-left: 20px;
+  display: none;
+  flex-direction: column;
+  gap: 20px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+}
+.sub-menu.show {
+  display: flex;
+  opacity: 1;
+  transform: translateY(0);
+}
+.sub-menu li {
+  transition: all 0.3s ease;
+}
+.sub-menu a {
+  color: #aaa;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 400;
+  transition: color 0.3s ease;
+}
+.sub-menu a:hover {
+  color: #FFCC00;
+  padding-left: 5px;
+}
+
+/* 原有菜单动画兼容 */
 #side-menu li {
   opacity: 0;
   transform: translateX(30px);
@@ -177,20 +272,6 @@ header.show {
 #side-menu li:nth-child(2) { transition-delay: 0.2s; }
 #side-menu li:nth-child(3) { transition-delay: 0.3s; }
 #side-menu li:nth-child(4) { transition-delay: 0.4s; }
-#side-menu a {
-  color: #ccc;
-  text-decoration: none;
-  font-size: 18px;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-#side-menu a:hover {
-  color: #FFCC00;
-}
-#side-menu a.active {
-  color: #FFCC00;
-  font-weight: 600;
-}
 
 /* 内容区域 —— 完全原样 */
 #content {
@@ -371,7 +452,130 @@ header.show {
   transform: scale(1.06);
 }
 
-/* 功能页面输入框面板 */
+/* ========== 新增：汉堡AI聊天样式 ========== */
+.ai-chat-panel {
+  margin-top: 40px;
+  background: #121212;
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.ai-title {
+  font-size: 28px;
+  color: #FFCC00;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ai-avatar {
+  width: 40px;
+  height: 40px;
+  background: #FFCC00;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  font-weight: bold;
+  font-size: 18px;
+}
+.chat-container {
+  height: 400px;
+  background: #1A1A1A;
+  border-radius: 12px;
+  padding: 20px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.chat-message {
+  max-width: 80%;
+  padding: 12px 18px;
+  border-radius: 12px;
+  line-height: 1.5;
+}
+.user-message {
+  align-self: flex-end;
+  background: #FFCC00;
+  color: #000;
+}
+.ai-message {
+  align-self: flex-start;
+  background: #2A2A2A;
+  color: #fff;
+}
+.loading-message {
+  align-self: flex-start;
+  background: #2A2A2A;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 12px;
+}
+.loading-dot {
+  display: inline-block;
+  animation: dotBlink 1s infinite;
+}
+.loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotBlink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+.chat-input-group {
+  display: flex;
+  gap: 10px;
+}
+.chat-input {
+  flex: 1;
+  padding: 14px 18px;
+  background: #1A1A1A;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  resize: none;
+  height: 60px;
+}
+.chat-input:focus {
+  outline: none;
+  border-color: #FFCC00;
+}
+.send-btn {
+  padding: 0 30px;
+  background: #FFCC00;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.send-btn:hover {
+  background: #FF9900;
+  transform: translateY(-2px);
+}
+.send-btn:disabled {
+  background: #666;
+  cursor: not-allowed;
+  transform: none;
+}
+.error-text {
+  color: #ff6b6b;
+  font-size: 14px;
+  margin-top: 10px;
+  display: none;
+}
+.error-text.show {
+  display: block;
+}
+
+/* ========== 视频处理功能样式（保留） ========== */
 .func-panel {
   margin-top: 40px;
   background: #121212;
@@ -384,14 +588,13 @@ header.show {
   color: #FFCC00;
   margin-bottom: 20px;
 }
-/* 新增：输入框+清空按钮容器 */
 .input-group {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
 }
 .func-input {
-  flex: 1; /* 输入框占满剩余宽度 */
+  flex: 1;
   padding: 14px 18px;
   background: #1A1A1A;
   border: 1px solid #333;
@@ -404,7 +607,6 @@ header.show {
   outline: none;
   border-color: #FFCC00;
 }
-/* 新增：清空按钮样式 */
 .clear-btn {
   padding: 0 20px;
   background: #333;
@@ -437,9 +639,8 @@ header.show {
   background: #FF9900;
   transform: translateY(-2px);
 }
-/* 修改：结果框永久隐藏（不再显示处理后的链接） */
 .func-result {
-  display: none !important; /* 强制隐藏 */
+  display: none !important;
   margin-top: 20px;
   padding: 16px;
   background: #1A1A1A;
@@ -451,7 +652,7 @@ header.show {
   display: none !important;
 }
 
-/* ========== 新增：4秒加载弹窗样式 ========== */
+/* 4秒加载弹窗样式（保留） */
 #loading-overlay {
   position: fixed;
   top: 0;
@@ -463,7 +664,7 @@ header.show {
   display: none;
   justify-content: center;
   align-items: center;
-  z-index: 9998; /* 低于开场动画，高于页面内容 */
+  z-index: 9998;
   color: #fff;
   text-align: center;
 }
@@ -503,7 +704,7 @@ header.show {
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  display: none; /* 默认隐藏，加载完显示 */
+  display: none;
   transition: all 0.3s ease;
 }
 .jump-btn:hover {
@@ -514,7 +715,7 @@ header.show {
   font-size: 12px;
   color: #ff6b6b;
   margin-top: 10px;
-  display: none; /* 默认隐藏，加载完显示 */
+  display: none;
 }
 </style>
 </head>
@@ -528,7 +729,7 @@ header.show {
   </div>
 </div>
 
-<!-- 新增：4秒加载弹窗 (默认隐藏) -->
+<!-- 4秒加载弹窗 (默认隐藏) -->
 <div id="loading-overlay">
   <div class="loading-card">
     <h3>链接安全处理中</h3>
@@ -542,7 +743,7 @@ header.show {
   </div>
 </div>
 
-<!-- 导航 —— 改为左侧LOGO + 右侧汉堡按钮 -->
+<!-- 导航 —— 左侧LOGO + 右侧汉堡按钮 -->
 <header>
   <div id="final-logo">视频处理器</div>
   <div id="hamburger">
@@ -552,17 +753,43 @@ header.show {
   </div>
 </header>
 
-<!-- 右侧滑出菜单 -->
+<!-- 菜单背景遮罩 -->
+<div id="menu-mask"></div>
+
+<!-- 重构：右侧滑出菜单 - 支持二级菜单 -->
 <div id="side-menu">
   <ul>
-    <li><a href="#home" class="active menu-link">首页</a></li>
-    <li><a href="#func" class="menu-link">功能</a></li>
-    <li><a href="#use" class="menu-link">使用说明</a></li>
-    <li><a href="#about" class="menu-link">关于</a></li>
+    <li class="main-menu-item">
+      <a href="#home" class="main-menu-link active">
+        首页
+      </a>
+    </li>
+    <!-- 修改：功能菜单名称 -->
+    <li class="main-menu-item">
+      <a href="javascript:void(0)" class="main-menu-link func-parent">
+        功能
+        <span class="arrow"></span>
+      </a>
+      <!-- 修改：二级菜单名称和链接 -->
+      <ul class="sub-menu func-submenu">
+        <li><a href="#video-process" class="sub-menu-link">视频处理功能</a></li>
+        <li><a href="#ai-chat" class="sub-menu-link">汉堡AI聊天</a></li>
+      </ul>
+    </li>
+    <li class="main-menu-item">
+      <a href="#use" class="main-menu-link">
+        使用说明
+      </a>
+    </li>
+    <li class="main-menu-item">
+      <a href="#about" class="main-menu-link">
+        关于
+      </a>
+    </li>
   </ul>
 </div>
 
-<!-- 内容 —— 100% 原样（仅修改功能面板结构） -->
+<!-- 内容区域 -->
 <div id="content">
   <section class="page active" id="home">
     <div class="page-in">
@@ -599,18 +826,16 @@ header.show {
     </div>
   </section>
 
-  <section class="page" id="func">
+  <!-- 视频处理功能页面（保留原有） -->
+  <section class="page" id="video-process">
     <div class="page-in">
-      <h2 class="page-title">核心功能</h2>
+      <h2 class="page-title">视频处理功能</h2>
       <p class="page-desc">支持本地视频播放、在线解析、倍速播放、画面调节、截图、转格式等多种实用功能，界面简洁，操作简单，打开即用。</p>
       
-      <!-- 新增的功能输入面板（修改：加入清空按钮容器） -->
       <div class="func-panel">
         <h3>视频地址解析</h3>
-        <!-- 新增：input-group容器，包含输入框+清空按钮 -->
         <div class="input-group">
           <input type="text" class="func-input" id="videoInput" placeholder="请输入视频地址或关键词...">
-          <!-- 新增：清空按钮 -->
           <button class="clear-btn" id="clearBtn">清空</button>
         </div>
         <button class="func-btn" id="processBtn">开始处理</button>
@@ -621,6 +846,30 @@ header.show {
 
       <div class="img-box" style="margin-top: 40px;">
         <img src="https://picsum.photos/id/60/1600/800" alt="功能">
+      </div>
+    </div>
+  </section>
+
+  <!-- 新增：汉堡AI聊天页面 -->
+  <section class="page" id="ai-chat">
+    <div class="page-in">
+      <h2 class="page-title">汉堡AI聊天</h2>
+      <p class="page-desc">和汉堡AI聊天，解答你的各种问题，支持自然语言对话，响应快速准确。</p>
+      
+      <div class="ai-chat-panel">
+        <div class="ai-title">
+          <div class="ai-avatar">汉</div>
+          <span>汉堡AI</span>
+        </div>
+        <div class="chat-container" id="chatContainer">
+          <!-- 初始消息 -->
+          <div class="ai-message">你好！我是汉堡AI，有什么可以帮助你的吗？</div>
+        </div>
+        <div class="chat-input-group">
+          <textarea class="chat-input" id="chatInput" placeholder="请输入你的问题..."></textarea>
+          <button class="send-btn" id="sendBtn">发送</button>
+        </div>
+        <div class="error-text" id="errorText">网络异常，请稍后重试</div>
       </div>
     </div>
   </section>
@@ -662,50 +911,56 @@ const processBtn = document.getElementById('processBtn');
 const videoInput = document.getElementById('videoInput');
 const resultBox = document.getElementById('resultBox');
 const resultText = document.getElementById('resultText');
-// 新增：获取清空按钮
 const clearBtn = document.getElementById('clearBtn');
+const menuMask = document.getElementById('menu-mask');
 
-// --- 新增：加载弹窗元素 ---
+// --- AI聊天元素 ---
+const chatContainer = document.getElementById('chatContainer');
+const chatInput = document.getElementById('chatInput');
+const sendBtn = document.getElementById('sendBtn');
+const errorText = document.getElementById('errorText');
+
+// --- 加载弹窗元素 ---
 const loadingOverlay = document.getElementById('loading-overlay');
 const loadingCountdown = document.getElementById('loading-countdown');
 const loadingBar = document.getElementById('loading-bar');
 const jumpBtn = document.getElementById('jump-btn');
 const warningText = document.getElementById('warning-text');
-let finalJumpUrl = ''; // 存储最终拼接的链接
+let finalJumpUrl = '';
 
-// --- 1. 开场动画：严格按步骤执行 ---
-// 步骤0：200ms后开始
+// --- 二级菜单元素 ---
+const funcParentLink = document.querySelector('.func-parent');
+const funcSubmenu = document.querySelector('.func-submenu');
+const arrowIcon = document.querySelector('.arrow');
+const subMenuLinks = document.querySelectorAll('.sub-menu-link');
+
+// --- 1. 开场动画 ---
 setTimeout(() => {
-  // 步骤1：显示拼合（大框+小三角出现）
   playContainer.style.opacity = 1;
   playContainer.style.transform = 'scale(1)';
 
   setTimeout(() => {
-    // 步骤2：震动
     playContainer.classList.add('shake');
 
     setTimeout(() => {
-      // 步骤3：仅小三角形旋转 (关键！)
       playTri.style.transition = 'transform 0.5s ease';
       playTri.style.transform = 'translate(-50%, -50%) rotate(15deg)';
 
       setTimeout(() => {
-        // 步骤4：整体一起旋转
         playContainer.style.transition = 'transform 0.8s cubic-bezier(0.22,1,0.36,1)';
         playContainer.style.transform = 'scale(1) rotate(360deg)';
 
         setTimeout(() => {
-          // 步骤5：移动到左上角做LOGO（不飞出去）
           playContainer.style.transition = 'all 1s ease';
           playContainer.style.transform = 'translate(-47vw, -45vh) scale(0.3) rotate(360deg)';
           playContainer.style.opacity = 0.8;
 
           setTimeout(() => {
-            // 步骤6：隐藏开场，显示页面
             intro.style.opacity = 0;
+            intro.style.pointerEvents = 'none';
             setTimeout(() => {
               intro.style.display = 'none';
-              header.classList.add('show'); // 初始显示
+              header.classList.add('show');
 
               setTimeout(() => {
                 content.classList.add('show');
@@ -715,66 +970,106 @@ setTimeout(() => {
             }, 300);
           }, 800);
         }, 600);
-      }, 500); // 小三角旋转时间
-    }, 300); // 震动时间
-  }, 400); // 拼合时间
+      }, 500);
+    }, 300);
+  }, 400);
 }, 200);
 
 // --- 2. 汉堡菜单交互 ---
 hamburger.addEventListener('click', () => {
   hamburger.classList.toggle('active');
   sideMenu.classList.toggle('open');
+  menuMask.classList.toggle('show');
+  
+  if (funcSubmenu.classList.contains('show')) {
+    funcSubmenu.classList.remove('show');
+    arrowIcon.classList.remove('rotate');
+  }
 });
 
-// --- 3. 菜单切换 (原样) ---
-const menuLinks = document.querySelectorAll('.menu-link');
+menuMask.addEventListener('click', () => {
+  hamburger.classList.remove('active');
+  sideMenu.classList.remove('open');
+  menuMask.classList.remove('show');
+  
+  funcSubmenu.classList.remove('show');
+  arrowIcon.classList.remove('rotate');
+});
+
+funcParentLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  funcSubmenu.classList.toggle('show');
+  arrowIcon.classList.toggle('rotate');
+});
+
+// --- 3. 菜单切换逻辑 ---
+const mainMenuLinks = document.querySelectorAll('.main-menu-link:not(.func-parent)');
 const pages = document.querySelectorAll('.page');
-menuLinks.forEach(link => {
+
+// 一级菜单处理
+mainMenuLinks.forEach(link => {
   link.addEventListener('click', (e) => {
     e.preventDefault();
     const id = link.getAttribute('href').substring(1);
-    menuLinks.forEach(l => l.classList.remove('active'));
-    link.classList.add('active');
+    
+    mainMenuLinks.forEach(l => l.classList.remove('active'));
     pages.forEach(p => p.classList.remove('active'));
+    
+    link.classList.add('active');
     document.getElementById(id).classList.add('active');
     
-    // 点击后关闭菜单
     hamburger.classList.remove('active');
     sideMenu.classList.remove('open');
+    menuMask.classList.remove('show');
+    
+    funcSubmenu.classList.remove('show');
+    arrowIcon.classList.remove('rotate');
   });
 });
 
-// --- 新增：清空按钮点击事件（丝滑交互） ---
+// 二级菜单处理
+subMenuLinks.forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    const id = link.getAttribute('href').substring(1);
+    
+    pages.forEach(p => p.classList.remove('active'));
+    mainMenuLinks.forEach(l => l.classList.remove('active'));
+    
+    document.getElementById(id).classList.add('active');
+    
+    hamburger.classList.remove('active');
+    sideMenu.classList.remove('open');
+    menuMask.classList.remove('show');
+    
+    funcSubmenu.classList.remove('show');
+    arrowIcon.classList.remove('rotate');
+  });
+});
+
+// --- 4. 视频处理功能 ---
 clearBtn.addEventListener('click', () => {
-  // 1. 清空输入框内容
   videoInput.value = '';
-  
-  // 2. 隐藏结果框（双重保险）
   resultBox.classList.remove('show');
   
-  // 3. 丝滑交互反馈：按钮短暂变色+缩放
   clearBtn.style.background = '#FFCC00';
   clearBtn.style.color = '#000';
   clearBtn.style.transform = 'scale(0.95)';
   
-  // 4. 恢复按钮样式
   setTimeout(() => {
     clearBtn.style.transition = 'all 0.3s ease';
     clearBtn.style.background = '#333';
     clearBtn.style.color = '#fff';
     clearBtn.style.transform = 'translateY(-2px) scale(1)';
     
-    // 5. 最终恢复原位
     setTimeout(() => {
       clearBtn.style.transform = 'translateY(0) scale(1)';
     }, 150);
   }, 200);
   
-  // 6. 让输入框获得焦点，方便重新输入
   videoInput.focus();
 });
 
-// --- 4. 功能页面输入框逻辑 (修改：移除结果显示，保留加载跳转) ---
 processBtn.addEventListener('click', () => {
   const inputValue = videoInput.value.trim();
   if (!inputValue) {
@@ -782,40 +1077,109 @@ processBtn.addEventListener('click', () => {
     return;
   }
 
-  // 1. 拼接固定前缀（仅后台处理，不显示）
   const fixedPrefix = "https://jx.xmflv.cc/?url=";
   finalJumpUrl = fixedPrefix + inputValue;
   
-  // 2. 不再显示结果框（已通过CSS强制隐藏）
-  
-  // 3. 显示加载弹窗并开始倒计时
   showLoadingOverlay();
 });
 
-// --- 新增：显示加载弹窗并执行4秒倒计时 ---
+// --- 5. AI聊天功能核心逻辑 ---
+// 发送消息
+sendBtn.addEventListener('click', sendMessage);
+chatInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+function sendMessage() {
+  const message = chatInput.value.trim();
+  if (!message) return;
+  
+  // 添加用户消息
+  const userMsg = document.createElement('div');
+  userMsg.className = 'chat-message user-message';
+  userMsg.textContent = message;
+  chatContainer.appendChild(userMsg);
+  
+  // 清空输入框
+  chatInput.value = '';
+  // 滚动到底部
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+  
+  // 显示加载中
+  const loadingMsg = document.createElement('div');
+  loadingMsg.className = 'loading-message';
+  loadingMsg.innerHTML = '汉堡正在思考中<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>';
+  chatContainer.appendChild(loadingMsg);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+  
+  // 禁用发送按钮
+  sendBtn.disabled = true;
+  // 隐藏错误提示
+  errorText.classList.remove('show');
+  
+  // 发送请求到后端
+  fetch('http://localhost:3000/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message: message
+    })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error('网络异常');
+    return response.json();
+  })
+  .then(data => {
+    // 移除加载中
+    chatContainer.removeChild(loadingMsg);
+    
+    // 添加AI回复
+    const aiMsg = document.createElement('div');
+    aiMsg.className = 'chat-message ai-message';
+    aiMsg.textContent = data.answer;
+    chatContainer.appendChild(aiMsg);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    // 启用发送按钮
+    sendBtn.disabled = false;
+  })
+  .catch(error => {
+    // 移除加载中
+    chatContainer.removeChild(loadingMsg);
+    
+    // 显示错误提示
+    errorText.classList.add('show');
+    // 启用发送按钮
+    sendBtn.disabled = false;
+    
+    console.error('请求失败:', error);
+  });
+}
+
+// --- 6. 加载弹窗函数 ---
 function showLoadingOverlay() {
-  // 重置加载状态
   loadingBar.style.width = '0%';
   jumpBtn.style.display = 'none';
   warningText.style.display = 'none';
   loadingCountdown.innerText = '剩余 4 秒...';
   
-  // 显示弹窗
   loadingOverlay.style.display = 'flex';
   
-  // 启动进度条动画
   setTimeout(() => {
     loadingBar.style.width = '100%';
   }, 10);
   
-  // 4秒倒计时逻辑
   let seconds = 4;
   const timer = setInterval(() => {
     seconds--;
     if (seconds <= 0) {
       clearInterval(timer);
       loadingCountdown.innerText = '安全验证完成';
-      // 显示跳转按钮和安全警告
       jumpBtn.style.display = 'block';
       warningText.style.display = 'block';
     } else {
@@ -824,9 +1188,8 @@ function showLoadingOverlay() {
   }, 1000);
 }
 
-// --- 新增：跳转按钮点击事件（核心安全逻辑） ---
+// --- 7. 跳转按钮事件 ---
 jumpBtn.addEventListener('click', () => {
-  // 强制授权确认，防止微信劫持
   const isAuthorized = confirm(
     "【安全授权提示】\n" +
     "1. 该链接将跳转至第三方站点，非官方渠道可能存在风险；\n" +
@@ -835,16 +1198,12 @@ jumpBtn.addEventListener('click', () => {
   );
 
   if (isAuthorized) {
-    // 判断是否为微信浏览器
     const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
     if (isWeChat) {
-      // 微信环境：用新窗口打开，避免被内置浏览器劫持
       window.open(finalJumpUrl, '_blank');
     } else {
-      // 其他环境：直接跳转
       window.location.href = finalJumpUrl;
     }
-    // 隐藏加载层
     loadingOverlay.style.display = 'none';
   } else {
     alert('您已取消授权，跳转终止。');
@@ -852,24 +1211,18 @@ jumpBtn.addEventListener('click', () => {
   }
 });
 
-// --- 5. 滚动逻辑：终极修复版 ---
-// 规则：向下滚(或停)则隐藏；只有向上滚才显示，停住保持显示。
+// --- 8. 滚动逻辑 ---
 let lastScrollY = 0;
-let isScrollingUp = false;
 
 window.addEventListener('scroll', () => {
   const currentScrollY = window.scrollY;
 
-  // 判断滚动方向
   if (currentScrollY < lastScrollY) {
-    // 向上滚动：显示菜单
     header.classList.add('show');
   } else {
-    // 向下滚动 或 停止滚动：隐藏菜单
     header.classList.remove('show');
   }
 
-  // 更新最后滚动位置
   lastScrollY = currentScrollY;
 });
 </script>
