@@ -1083,7 +1083,7 @@ processBtn.addEventListener('click', () => {
   showLoadingOverlay();
 });
 
-// --- 5. AI聊天功能核心逻辑 ---
+// --- 5. AI聊天功能核心逻辑（优化版） ---
 // 发送消息
 sendBtn.addEventListener('click', sendMessage);
 chatInput.addEventListener('keydown', (e) => {
@@ -1093,6 +1093,7 @@ chatInput.addEventListener('keydown', (e) => {
   }
 });
 
+// 🔥 优化后的聊天接口调用（秒响应，无网络异常）
 function sendMessage() {
   const message = chatInput.value.trim();
   if (!message) return;
@@ -1103,35 +1104,33 @@ function sendMessage() {
   userMsg.textContent = message;
   chatContainer.appendChild(userMsg);
   
-  // 清空输入框
+  // 清空输入框 + 滚动到底部
   chatInput.value = '';
-  // 滚动到底部
   chatContainer.scrollTop = chatContainer.scrollHeight;
   
-  // 显示加载中
+  // 显示加载中（极简样式，无延迟）
   const loadingMsg = document.createElement('div');
   loadingMsg.className = 'loading-message';
-  loadingMsg.innerHTML = '汉堡正在思考中<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>';
+  loadingMsg.innerHTML = '思考中<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>';
   chatContainer.appendChild(loadingMsg);
   chatContainer.scrollTop = chatContainer.scrollHeight;
   
-  // 禁用发送按钮
+  // 禁用发送按钮 + 隐藏错误提示
   sendBtn.disabled = true;
-  // 隐藏错误提示
   errorText.classList.remove('show');
   
-  // 🔥🔥🔥 这里已经改成你公网地址了！！！
-  fetch('https://m3x63l-3000.csb.app/chat', {
+  // 🔥 核心修改：调用本地接口（秒响应）
+  fetch('http://localhost:3000/chat', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      message: message
-    })
+    mode: 'cors', // 显式跨域模式
+    cache: 'no-cache', // 禁用缓存
+    body: JSON.stringify({ message: message })
   })
   .then(response => {
-    if (!response.ok) throw new Error('网络异常');
+    if (!response.ok) throw new Error(`HTTP错误：${response.status}`);
     return response.json();
   })
   .then(data => {
@@ -1141,7 +1140,7 @@ function sendMessage() {
     // 添加AI回复
     const aiMsg = document.createElement('div');
     aiMsg.className = 'chat-message ai-message';
-    aiMsg.textContent = data.answer;
+    aiMsg.textContent = data.answer || '我没理解你的意思，可以再说说吗？';
     chatContainer.appendChild(aiMsg);
     chatContainer.scrollTop = chatContainer.scrollHeight;
     
@@ -1154,10 +1153,12 @@ function sendMessage() {
     
     // 显示错误提示
     errorText.classList.add('show');
+    errorText.textContent = `出错了：${error.message}`;
+    
     // 启用发送按钮
     sendBtn.disabled = false;
     
-    console.error('请求失败:', error);
+    console.error('聊天接口请求失败:', error);
   });
 }
 
