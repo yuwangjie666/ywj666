@@ -384,20 +384,43 @@ header.show {
   color: #FFCC00;
   margin-bottom: 20px;
 }
+/* 新增：输入框+清空按钮容器 */
+.input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
 .func-input {
-  width: 100%;
+  flex: 1; /* 输入框占满剩余宽度 */
   padding: 14px 18px;
   background: #1A1A1A;
   border: 1px solid #333;
   border-radius: 8px;
   color: #fff;
   font-size: 16px;
-  margin-bottom: 20px;
   transition: border-color 0.3s ease;
 }
 .func-input:focus {
   outline: none;
   border-color: #FFCC00;
+}
+/* 新增：清空按钮样式 */
+.clear-btn {
+  padding: 0 20px;
+  background: #333;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+.clear-btn:hover {
+  background: #444;
+  border-color: #FFCC00;
+  transform: translateY(-2px);
 }
 .func-btn {
   padding: 12px 30px;
@@ -414,17 +437,18 @@ header.show {
   background: #FF9900;
   transform: translateY(-2px);
 }
+/* 修改：结果框永久隐藏（不再显示处理后的链接） */
 .func-result {
+  display: none !important; /* 强制隐藏 */
   margin-top: 20px;
   padding: 16px;
   background: #1A1A1A;
   border-radius: 8px;
   color: #ccc;
   font-size: 15px;
-  display: none;
 }
 .func-result.show {
-  display: block;
+  display: none !important;
 }
 
 /* ========== 新增：4秒加载弹窗样式 ========== */
@@ -480,6 +504,11 @@ header.show {
   font-weight: 600;
   cursor: pointer;
   display: none; /* 默认隐藏，加载完显示 */
+  transition: all 0.3s ease;
+}
+.jump-btn:hover {
+  background: #FF9900;
+  transform: translateY(-2px);
 }
 .warning-text {
   font-size: 12px;
@@ -533,7 +562,7 @@ header.show {
   </ul>
 </div>
 
-<!-- 内容 —— 100% 原样 -->
+<!-- 内容 —— 100% 原样（仅修改功能面板结构） -->
 <div id="content">
   <section class="page active" id="home">
     <div class="page-in">
@@ -575,10 +604,15 @@ header.show {
       <h2 class="page-title">核心功能</h2>
       <p class="page-desc">支持本地视频播放、在线解析、倍速播放、画面调节、截图、转格式等多种实用功能，界面简洁，操作简单，打开即用。</p>
       
-      <!-- 新增的功能输入面板 -->
+      <!-- 新增的功能输入面板（修改：加入清空按钮容器） -->
       <div class="func-panel">
         <h3>视频地址解析</h3>
-        <input type="text" class="func-input" id="videoInput" placeholder="请输入视频地址或关键词...">
+        <!-- 新增：input-group容器，包含输入框+清空按钮 -->
+        <div class="input-group">
+          <input type="text" class="func-input" id="videoInput" placeholder="请输入视频地址或关键词...">
+          <!-- 新增：清空按钮 -->
+          <button class="clear-btn" id="clearBtn">清空</button>
+        </div>
         <button class="func-btn" id="processBtn">开始处理</button>
         <div class="func-result" id="resultBox">
           处理结果：<span id="resultText"></span>
@@ -628,6 +662,8 @@ const processBtn = document.getElementById('processBtn');
 const videoInput = document.getElementById('videoInput');
 const resultBox = document.getElementById('resultBox');
 const resultText = document.getElementById('resultText');
+// 新增：获取清空按钮
+const clearBtn = document.getElementById('clearBtn');
 
 // --- 新增：加载弹窗元素 ---
 const loadingOverlay = document.getElementById('loading-overlay');
@@ -708,7 +744,37 @@ menuLinks.forEach(link => {
   });
 });
 
-// --- 4. 功能页面输入框逻辑 (重写：加入拼接、加载、授权、跳转) ---
+// --- 新增：清空按钮点击事件（丝滑交互） ---
+clearBtn.addEventListener('click', () => {
+  // 1. 清空输入框内容
+  videoInput.value = '';
+  
+  // 2. 隐藏结果框（双重保险）
+  resultBox.classList.remove('show');
+  
+  // 3. 丝滑交互反馈：按钮短暂变色+缩放
+  clearBtn.style.background = '#FFCC00';
+  clearBtn.style.color = '#000';
+  clearBtn.style.transform = 'scale(0.95)';
+  
+  // 4. 恢复按钮样式
+  setTimeout(() => {
+    clearBtn.style.transition = 'all 0.3s ease';
+    clearBtn.style.background = '#333';
+    clearBtn.style.color = '#fff';
+    clearBtn.style.transform = 'translateY(-2px) scale(1)';
+    
+    // 5. 最终恢复原位
+    setTimeout(() => {
+      clearBtn.style.transform = 'translateY(0) scale(1)';
+    }, 150);
+  }, 200);
+  
+  // 6. 让输入框获得焦点，方便重新输入
+  videoInput.focus();
+});
+
+// --- 4. 功能页面输入框逻辑 (修改：移除结果显示，保留加载跳转) ---
 processBtn.addEventListener('click', () => {
   const inputValue = videoInput.value.trim();
   if (!inputValue) {
@@ -716,13 +782,11 @@ processBtn.addEventListener('click', () => {
     return;
   }
 
-  // 1. 拼接固定前缀
+  // 1. 拼接固定前缀（仅后台处理，不显示）
   const fixedPrefix = "https://jx.xmflv.cc/?url=";
   finalJumpUrl = fixedPrefix + inputValue;
   
-  // 2. 显示结果（可选，保持原功能）
-  resultText.textContent = finalJumpUrl;
-  resultBox.classList.add('show');
+  // 2. 不再显示结果框（已通过CSS强制隐藏）
   
   // 3. 显示加载弹窗并开始倒计时
   showLoadingOverlay();
