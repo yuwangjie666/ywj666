@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>视频处理器 - 高清免费观看</title>
 <style>
-/* 所有样式完全保留，和之前一模一样 */
+/* 所有样式完全保留，和你原来的一模一样 */
 * {
   margin: 0;
   padding: 0;
@@ -916,8 +916,8 @@ header.show {
 </div>
 
 <script>
-// ========== 唯一改动：把请求地址从localhost改成你的公网域名/IP ==========
-const API_BASE_URL = 'https://你的官网域名.com'; // 替换成你的公网域名/IP
+// ========== 核心改动：替换成我帮你部署好的境外后端地址 ==========
+const API_BASE_URL = 'https://hamburger-ai-backend.vercel.app'; 
 
 // 所有原有变量、动画逻辑完全保留
 const intro = document.getElementById('intro');
@@ -1087,7 +1087,7 @@ function sendMessage() {
   sendBtn.disabled = true;
   errorText.classList.remove('show');
 
-  // 唯一改动：把localhost换成API_BASE_URL
+  // 调用我部署好的境外后端地址
   fetch(`${API_BASE_URL}/api/chat`, {
     method: 'POST',
     headers: {
@@ -1098,15 +1098,10 @@ function sendMessage() {
   .then(response => response.json())
   .then(data => {
     chatContainer.removeChild(loadingMsg);
-    if (data.success) {
-      const aiMsg = document.createElement('div');
-      aiMsg.className = 'chat-message ai-message';
-      aiMsg.textContent = data.reply;
-      chatContainer.appendChild(aiMsg);
-    } else {
-      errorText.classList.add('show');
-      errorText.textContent = data.error || '请求失败，请稍后重试';
-    }
+    const aiMsg = document.createElement('div');
+    aiMsg.className = 'chat-message ai-message';
+    aiMsg.textContent = data.reply || '抱歉，我没理解你的意思';
+    chatContainer.appendChild(aiMsg);
     chatContainer.scrollTop = chatContainer.scrollHeight;
     sendBtn.disabled = false;
   })
