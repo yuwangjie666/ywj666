@@ -2,92 +2,191 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>极简AI聊天测试</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汉堡AI（对接豆包大模型）</title>
     <style>
-        /* 极简样式，保证功能可用 */
-        body { padding: 20px; font-family: Arial; }
-        #chat-container { width: 500px; height: 400px; border: 1px solid #ccc; padding: 10px; overflow-y: auto; margin-bottom: 10px; }
-        .user-msg { text-align: right; margin: 5px 0; color: blue; }
-        .ai-msg { text-align: left; margin: 5px 0; color: green; }
-        #msg-input { width: 400px; height: 60px; padding: 5px; }
-        #send-btn { width: 80px; height: 60px; }
-        .error { color: red; margin-top: 10px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "微软雅黑", Arial, sans-serif; }
+        body { background: #f5f5f5; padding: 20px; max-width: 800px; margin: 0 auto; }
+        h1 { color: #1890ff; text-align: center; margin-bottom: 20px; }
+        #chat-container { 
+            width: 100%; 
+            height: 60vh; 
+            border: 1px solid #e8e8e8; 
+            border-radius: 12px; 
+            padding: 15px; 
+            overflow-y: auto; 
+            background: #fff;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .msg-item { margin: 10px 0; display: flex; }
+        .user-msg { justify-content: flex-end; }
+        .ai-msg { justify-content: flex-start; }
+        .msg-content {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            line-height: 1.5;
+            font-size: 16px;
+        }
+        .user-msg .msg-content {
+            background: #1890ff;
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .ai-msg .msg-content {
+            background: #f0f0f0;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            border-left: 3px solid #1890ff;
+        }
+        .loading-msg .msg-content {
+            color: #999;
+            font-style: italic;
+        }
+        #input-area { display: flex; gap: 10px; align-items: flex-end; }
+        #msg-input {
+            flex: 1;
+            height: 80px;
+            padding: 12px;
+            border: 1px solid #e8e8e8;
+            border-radius: 12px;
+            resize: none;
+            font-size: 16px;
+            outline: none;
+        }
+        #msg-input:focus { border-color: #1890ff; }
+        #send-btn {
+            width: 80px;
+            height: 80px;
+            background: #1890ff;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        #send-btn:hover { background: #40a9ff; }
+        #send-btn:disabled { background: #999; cursor: not-allowed; }
+        .error-text {
+            color: #ff4d4f;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        /* 滚动条美化 */
+        #chat-container::-webkit-scrollbar { width: 6px; }
+        #chat-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+        #chat-container::-webkit-scrollbar-thumb { background: #1890ff; border-radius: 3px; }
     </style>
 </head>
 <body>
-    <h1>AI聊天测试（对接火山方舟豆包）</h1>
+    <h1>汉堡AI（豆包大模型驱动）</h1>
     <div id="chat-container"></div>
-    <textarea id="msg-input" placeholder="输入消息发送（比如：你好）"></textarea>
-    <button id="send-btn">发送</button>
-    <div class="error" id="error-box"></div>
+    <div id="input-area">
+        <textarea id="msg-input" placeholder="输入问题（支持天气/油价/汇率/限行/距离查询）"></textarea>
+        <button id="send-btn">发送</button>
+    </div>
+    <div class="error-text" id="error-box"></div>
 
     <script>
-        // 已替换成我部署好的后端地址（无需修改）
-        const API_URL = 'https://ai-chat-huoshan.vercel.app/api/chat';
-        
+        // 核心配置：已对接你的 -v1 后端地址
+        const BACKEND_URL = 'https://hamburger-ai-backend-v1.vercel.app/api/chat';
+
         const chatContainer = document.getElementById('chat-container');
         const msgInput = document.getElementById('msg-input');
         const sendBtn = document.getElementById('send-btn');
         const errorBox = document.getElementById('error-box');
 
-        // 发送消息函数
-        function sendMsg() {
-            const msg = msgInput.value.trim();
-            if (!msg) return;
+        // 初始化欢迎语
+        function initWelcome() {
+            const welcomeMsg = createMsgElement('ai', '你好！我是汉堡，有什么可以帮助你的吗？（支持查天气、油价哦）');
+            chatContainer.appendChild(welcomeMsg);
+            scrollToBottom();
+        }
+
+        // 创建消息元素
+        function createMsgElement(type, content) {
+            const msgItem = document.createElement('div');
+            msgItem.className = `msg-item ${type}-msg`;
             
+            const msgContent = document.createElement('div');
+            msgContent.className = 'msg-content';
+            msgContent.textContent = content;
+            
+            msgItem.appendChild(msgContent);
+            return msgItem;
+        }
+
+        // 滚动到底部
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // 发送消息（对接后端）
+        async function sendMessage() {
+            const message = msgInput.value.trim();
+            if (!message) return;
+
             // 显示用户消息
-            const userMsg = document.createElement('div');
-            userMsg.className = 'user-msg';
-            userMsg.textContent = `我：${msg}`;
+            const userMsg = createMsgElement('user', message);
             chatContainer.appendChild(userMsg);
-            
-            // 清空输入框
             msgInput.value = '';
             errorBox.textContent = '';
+            sendBtn.disabled = true;
+            scrollToBottom();
 
             // 显示加载中
-            const loadingMsg = document.createElement('div');
-            loadingMsg.className = 'ai-msg';
-            loadingMsg.textContent = 'AI：思考中...';
+            const loadingMsg = createMsgElement('loading', '汉堡正在思考...');
             chatContainer.appendChild(loadingMsg);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            
-            // 调用后端API（已对接火山方舟豆包）
-            fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: msg })
-            })
-            .then(res => res.json())
-            .then(data => {
-                // 删除加载中提示
+            scrollToBottom();
+
+            try {
+                // 调用你的 -v1 后端
+                const response = await fetch(BACKEND_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+                // 删除加载中
                 chatContainer.removeChild(loadingMsg);
-                
-                // 显示AI回复
-                const aiMsg = document.createElement('div');
-                aiMsg.className = 'ai-msg';
-                aiMsg.textContent = `AI：${data.reply || '暂无回复'}`;
-                chatContainer.appendChild(aiMsg);
-                // 滚动到底部
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            })
-            .catch(err => {
-                // 删除加载中提示
+
+                if (data.success) {
+                    // 显示AI回复（豆包大模型+插件结果）
+                    const aiMsg = createMsgElement('ai', data.reply);
+                    chatContainer.appendChild(aiMsg);
+                } else {
+                    // 显示错误
+                    const errorMsg = createMsgElement('ai', `错误：${data.reply || data.error}`);
+                    chatContainer.appendChild(errorMsg);
+                    errorBox.textContent = `提示：${data.error || '请检查后端连接'}`;
+                }
+            } catch (err) {
+                // 网络错误处理
                 chatContainer.removeChild(loadingMsg);
-                
-                errorBox.textContent = `请求失败：${err.message}，请检查网络`;
-                console.error('错误：', err);
-            });
+                const errorMsg = createMsgElement('ai', '网络错误：无法连接到后端');
+                chatContainer.appendChild(errorMsg);
+                errorBox.textContent = `错误详情：${err.message}`;
+            } finally {
+                sendBtn.disabled = false;
+                scrollToBottom();
+            }
         }
 
         // 绑定事件
-        sendBtn.addEventListener('click', sendMsg);
+        sendBtn.addEventListener('click', sendMessage);
         msgInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                sendMsg();
+                sendMessage();
             }
         });
+
+        // 页面加载完成初始化
+        window.onload = initWelcome;
     </script>
 </body>
 </html>
