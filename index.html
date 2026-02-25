@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>极简AI聊天测试</title>
     <style>
-        /* 极简样式，只保证能用 */
+        /* 极简样式，保证功能可用 */
         body { padding: 20px; font-family: Arial; }
         #chat-container { width: 500px; height: 400px; border: 1px solid #ccc; padding: 10px; overflow-y: auto; margin-bottom: 10px; }
         .user-msg { text-align: right; margin: 5px 0; color: blue; }
@@ -15,15 +15,15 @@
     </style>
 </head>
 <body>
-    <h1>AI聊天测试</h1>
+    <h1>AI聊天测试（对接火山方舟豆包）</h1>
     <div id="chat-container"></div>
-    <textarea id="msg-input" placeholder="输入消息发送"></textarea>
+    <textarea id="msg-input" placeholder="输入消息发送（比如：你好）"></textarea>
     <button id="send-btn">发送</button>
     <div class="error" id="error-box"></div>
 
     <script>
-        // 替换成我部署的境外后端地址
-        const API_URL = 'https://hamburger-ai-backend.vercel.app/api/chat';
+        // 已替换成我部署好的后端地址（无需修改）
+        const API_URL = 'https://ai-chat-huoshan.vercel.app/api/chat';
         
         const chatContainer = document.getElementById('chat-container');
         const msgInput = document.getElementById('msg-input');
@@ -44,8 +44,15 @@
             // 清空输入框
             msgInput.value = '';
             errorBox.textContent = '';
+
+            // 显示加载中
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'ai-msg';
+            loadingMsg.textContent = 'AI：思考中...';
+            chatContainer.appendChild(loadingMsg);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
             
-            // 调用后端API
+            // 调用后端API（已对接火山方舟豆包）
             fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -53,6 +60,9 @@
             })
             .then(res => res.json())
             .then(data => {
+                // 删除加载中提示
+                chatContainer.removeChild(loadingMsg);
+                
                 // 显示AI回复
                 const aiMsg = document.createElement('div');
                 aiMsg.className = 'ai-msg';
@@ -62,7 +72,10 @@
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             })
             .catch(err => {
-                errorBox.textContent = `请求失败：${err.message}`;
+                // 删除加载中提示
+                chatContainer.removeChild(loadingMsg);
+                
+                errorBox.textContent = `请求失败：${err.message}，请检查网络`;
                 console.error('错误：', err);
             });
         }
