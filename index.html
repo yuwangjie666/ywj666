@@ -1,192 +1,449 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>汉堡AI（对接豆包大模型）</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "微软雅黑", Arial, sans-serif; }
-        body { background: #f5f5f5; padding: 20px; max-width: 800px; margin: 0 auto; }
-        h1 { color: #1890ff; text-align: center; margin-bottom: 20px; }
-        #chat-container { 
-            width: 100%; 
-            height: 60vh; 
-            border: 1px solid #e8e8e8; 
-            border-radius: 12px; 
-            padding: 15px; 
-            overflow-y: auto; 
-            background: #fff;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        .msg-item { margin: 10px 0; display: flex; }
-        .user-msg { justify-content: flex-end; }
-        .ai-msg { justify-content: flex-start; }
-        .msg-content {
-            max-width: 80%;
-            padding: 12px 18px;
-            border-radius: 18px;
-            line-height: 1.5;
-            font-size: 16px;
-        }
-        .user-msg .msg-content {
-            background: #1890ff;
-            color: #fff;
-            border-bottom-right-radius: 4px;
-        }
-        .ai-msg .msg-content {
-            background: #f0f0f0;
-            color: #333;
-            border-bottom-left-radius: 4px;
-            border-left: 3px solid #1890ff;
-        }
-        .loading-msg .msg-content {
-            color: #999;
-            font-style: italic;
-        }
-        #input-area { display: flex; gap: 10px; align-items: flex-end; }
-        #msg-input {
-            flex: 1;
-            height: 80px;
-            padding: 12px;
-            border: 1px solid #e8e8e8;
-            border-radius: 12px;
-            resize: none;
-            font-size: 16px;
-            outline: none;
-        }
-        #msg-input:focus { border-color: #1890ff; }
-        #send-btn {
-            width: 80px;
-            height: 80px;
-            background: #1890ff;
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.3s;
-        }
-        #send-btn:hover { background: #40a9ff; }
-        #send-btn:disabled { background: #999; cursor: not-allowed; }
-        .error-text {
-            color: #ff4d4f;
-            text-align: center;
-            margin-top: 10px;
-            font-size: 14px;
-        }
-        /* 滚动条美化 */
-        #chat-container::-webkit-scrollbar { width: 6px; }
-        #chat-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
-        #chat-container::-webkit-scrollbar-thumb { background: #1890ff; border-radius: 3px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>汉堡AI - 豆包大模型驱动（yuwangjie.cn）</title>
+  <style>
+    /* 全局样式重置 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "微软雅黑", "PingFang SC", Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f5f7fa;
+      padding: 16px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* 标题样式 */
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #1890ff;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 14px;
+      color: #666;
+    }
+
+    /* 聊天容器 */
+    .chat-container {
+      width: 100%;
+      height: 60vh;
+      background-color: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 12px;
+      padding: 16px;
+      overflow-y: auto;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+    }
+
+    /* 消息项 */
+    .msg-item {
+      display: flex;
+      margin-bottom: 16px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 用户消息 */
+    .msg-item.user {
+      justify-content: flex-end;
+    }
+
+    /* AI消息 */
+    .msg-item.ai {
+      justify-content: flex-start;
+    }
+
+    /* 加载中消息 */
+    .msg-item.loading {
+      justify-content: flex-start;
+    }
+
+    /* 消息内容 */
+    .msg-content {
+      max-width: 80%;
+      padding: 12px 18px;
+      border-radius: 18px;
+      line-height: 1.5;
+      font-size: 16px;
+      word-wrap: break-word;
+    }
+
+    /* 用户消息内容 */
+    .user .msg-content {
+      background-color: #1890ff;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    /* AI消息内容 */
+    .ai .msg-content {
+      background-color: #f0f2f5;
+      color: #333;
+      border-bottom-left-radius: 4px;
+      border-left: 3px solid #1890ff;
+    }
+
+    /* 加载中样式 */
+    .loading .msg-content {
+      background-color: #f8f8f8;
+      color: #999;
+      font-style: italic;
+    }
+
+    /* 错误提示 */
+    .error-content {
+      color: #ff4d4f;
+      background-color: #fff2f0;
+      border-left-color: #ff4d4f;
+    }
+
+    /* 输入区域 */
+    .input-area {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    /* 输入框 */
+    #msg-input {
+      flex: 1;
+      height: 80px;
+      padding: 12px;
+      border: 1px solid #e8e8e8;
+      border-radius: 12px;
+      resize: none;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.3s;
+      background-color: #fff;
+    }
+
+    #msg-input:focus {
+      border-color: #1890ff;
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+    }
+
+    #msg-input::placeholder {
+      color: #999;
+      font-size: 14px;
+    }
+
+    /* 发送按钮 */
+    #send-btn {
+      width: 80px;
+      height: 80px;
+      background-color: #1890ff;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #send-btn:hover {
+      background-color: #40a9ff;
+    }
+
+    #send-btn:disabled {
+      background-color: #999;
+      cursor: not-allowed;
+    }
+
+    /* 系统提示 */
+    .system-tips {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .error-tips {
+      color: #ff4d4f;
+      font-size: 14px;
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    /* 滚动条美化 */
+    .chat-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chat-container::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+
+    .chat-container::-webkit-scrollbar-thumb {
+      background: #1890ff;
+      border-radius: 3px;
+    }
+
+    .chat-container::-webkit-scrollbar-thumb:hover {
+      background: #40a9ff;
+    }
+
+    /* 功能提示标签 */
+    .msg-tag {
+      font-size: 10px;
+      margin-left: 8px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background-color: rgba(24, 144, 255, 0.1);
+      color: #1890ff;
+    }
+  </style>
 </head>
 <body>
+  <!-- 头部 -->
+  <div class="header">
     <h1>汉堡AI（豆包大模型驱动）</h1>
-    <div id="chat-container"></div>
-    <div id="input-area">
-        <textarea id="msg-input" placeholder="输入问题（支持天气/油价/汇率/限行/距离查询）"></textarea>
-        <button id="send-btn">发送</button>
-    </div>
-    <div class="error-text" id="error-box"></div>
+    <p>支持：天气 | 距离 | 汇率 | 油价 | 限行 查询</p>
+  </div>
 
-    <script>
-        // 核心配置：已对接你的 -v1 后端地址
-        const BACKEND_URL = 'https://hamburger-ai-backend-v1.vercel.app/api/chat';
+  <!-- 聊天容器 -->
+  <div class="chat-container" id="chat-container"></div>
 
-        const chatContainer = document.getElementById('chat-container');
-        const msgInput = document.getElementById('msg-input');
-        const sendBtn = document.getElementById('send-btn');
-        const errorBox = document.getElementById('error-box');
+  <!-- 输入区域 -->
+  <div class="input-area">
+    <textarea 
+      id="msg-input" 
+      placeholder="输入你的问题（示例：北京天气、美元汇率、全国油价）
+按Enter发送，Shift+Enter换行"
+    ></textarea>
+    <button id="send-btn">发送</button>
+  </div>
 
-        // 初始化欢迎语
-        function initWelcome() {
-            const welcomeMsg = createMsgElement('ai', '你好！我是汉堡，有什么可以帮助你的吗？（支持查天气、油价哦）');
-            chatContainer.appendChild(welcomeMsg);
-            scrollToBottom();
-        }
+  <!-- 错误提示 -->
+  <div class="error-tips" id="error-tips"></div>
 
-        // 创建消息元素
-        function createMsgElement(type, content) {
-            const msgItem = document.createElement('div');
-            msgItem.className = `msg-item ${type}-msg`;
-            
-            const msgContent = document.createElement('div');
-            msgContent.className = 'msg-content';
-            msgContent.textContent = content;
-            
-            msgItem.appendChild(msgContent);
-            return msgItem;
-        }
+  <!-- 系统提示 -->
+  <div class="system-tips">
+    后端地址：https://hamburger-ai-backend-v1.vercel.app | 前端地址：yuwangjie.cn
+  </div>
 
-        // 滚动到底部
-        function scrollToBottom() {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
+  <script>
+    // ========== 核心配置（已精准对接你的后端） ==========
+    const CONFIG = {
+      BACKEND_URL: 'https://hamburger-ai-backend-v1.vercel.app/api/chat',
+      HEALTH_CHECK_URL: 'https://hamburger-ai-backend-v1.vercel.app/api/health',
+      AI_NAME: '汉堡',
+      TIMEOUT: 30000 // 请求超时时间30秒
+    };
 
-        // 发送消息（对接后端）
-        async function sendMessage() {
-            const message = msgInput.value.trim();
-            if (!message) return;
+    // ========== DOM元素 ==========
+    const chatContainer = document.getElementById('chat-container');
+    const msgInput = document.getElementById('msg-input');
+    const sendBtn = document.getElementById('send-btn');
+    const errorTips = document.getElementById('error-tips');
 
-            // 显示用户消息
-            const userMsg = createMsgElement('user', message);
-            chatContainer.appendChild(userMsg);
-            msgInput.value = '';
-            errorBox.textContent = '';
-            sendBtn.disabled = true;
-            scrollToBottom();
+    // ========== 初始化函数 ==========
+    async function init() {
+      console.log('✅ 汉堡AI前端初始化');
+      console.log('🔧 配置信息：', CONFIG);
+      
+      // 初始化欢迎语
+      addMessage('ai', `你好呀～我是${CONFIG.AI_NAME}，有什么可以帮助你的吗？`, '系统');
+      
+      // 检查后端连接
+      await checkBackendStatus();
+    }
 
-            // 显示加载中
-            const loadingMsg = createMsgElement('loading', '汉堡正在思考...');
-            chatContainer.appendChild(loadingMsg);
-            scrollToBottom();
-
-            try {
-                // 调用你的 -v1 后端
-                const response = await fetch(BACKEND_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message })
-                });
-
-                const data = await response.json();
-                // 删除加载中
-                chatContainer.removeChild(loadingMsg);
-
-                if (data.success) {
-                    // 显示AI回复（豆包大模型+插件结果）
-                    const aiMsg = createMsgElement('ai', data.reply);
-                    chatContainer.appendChild(aiMsg);
-                } else {
-                    // 显示错误
-                    const errorMsg = createMsgElement('ai', `错误：${data.reply || data.error}`);
-                    chatContainer.appendChild(errorMsg);
-                    errorBox.textContent = `提示：${data.error || '请检查后端连接'}`;
-                }
-            } catch (err) {
-                // 网络错误处理
-                chatContainer.removeChild(loadingMsg);
-                const errorMsg = createMsgElement('ai', '网络错误：无法连接到后端');
-                chatContainer.appendChild(errorMsg);
-                errorBox.textContent = `错误详情：${err.message}`;
-            } finally {
-                sendBtn.disabled = false;
-                scrollToBottom();
-            }
-        }
-
-        // 绑定事件
-        sendBtn.addEventListener('click', sendMessage);
-        msgInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
+    // ========== 检查后端状态 ==========
+    async function checkBackendStatus() {
+      try {
+        const response = await fetch(CONFIG.HEALTH_CHECK_URL, {
+          method: 'GET',
+          timeout: 10000
         });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ 后端连接成功：', data);
+          addMessage('ai', `✅ 后端服务正常运行（Node ${data.node_version}）`, '系统');
+        } else {
+          throw new Error(`后端健康检查失败：${response.status}`);
+        }
+      } catch (error) {
+        console.error('❌ 后端连接失败：', error);
+        addMessage('ai', `❌ 无法连接到后端服务：${error.message}`, '系统', true);
+        errorTips.textContent = `后端连接错误：${error.message}，请检查后端部署状态`;
+      }
+    }
 
-        // 页面加载完成初始化
-        window.onload = initWelcome;
-    </script>
+    // ========== 添加消息到聊天容器 ==========
+    function addMessage(type, content, tag = '', isError = false) {
+      // 创建消息项
+      const msgItem = document.createElement('div');
+      msgItem.className = `msg-item ${type}`;
+      
+      // 创建消息内容
+      const msgContent = document.createElement('div');
+      msgContent.className = `msg-content ${isError ? 'error-content' : ''}`;
+      msgContent.textContent = content;
+      
+      // 添加标签（如：系统、插件、豆包）
+      if (tag) {
+        const msgTag = document.createElement('span');
+        msgTag.className = 'msg-tag';
+        msgTag.textContent = tag;
+        msgContent.appendChild(msgTag);
+      }
+      
+      // 添加到容器
+      msgItem.appendChild(msgContent);
+      chatContainer.appendChild(msgItem);
+      
+      // 滚动到底部
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // ========== 发送消息核心函数 ==========
+    async function sendMessage() {
+      // 清空之前的错误提示
+      errorTips.textContent = '';
+      
+      // 获取并校验输入内容
+      const message = msgInput.value.trim();
+      if (!message) {
+        errorTips.textContent = '❌ 消息不能为空，请输入内容后发送';
+        return;
+      }
+      
+      // 禁用发送按钮，防止重复发送
+      sendBtn.disabled = true;
+      
+      // 添加用户消息到聊天容器
+      addMessage('user', message);
+      
+      // 清空输入框
+      msgInput.value = '';
+      
+      // 添加加载中消息
+      const loadingMsg = addMessage('loading', `${CONFIG.AI_NAME}正在思考中...`);
+      
+      try {
+        console.log('📤 发送请求到后端：', { message });
+        
+        // 发送请求到后端
+        const response = await fetch(CONFIG.BACKEND_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ message }),
+          timeout: CONFIG.TIMEOUT
+        });
+        
+        console.log('📥 后端响应状态：', response.status);
+        
+        // 解析响应数据
+        const data = await response.json();
+        console.log('📥 后端响应数据：', data);
+        
+        // 移除加载中消息（找到最后一个加载中消息并删除）
+        const loadingElements = document.querySelectorAll('.msg-item.loading');
+        if (loadingElements.length > 0) {
+          loadingElements[loadingElements.length - 1].remove();
+        }
+        
+        // 处理响应
+        if (data.success) {
+          // 成功：添加AI回复
+          const tag = data.source === 'plugin' ? '插件' : '豆包';
+          addMessage('ai', data.reply, tag);
+        } else {
+          // 失败：显示错误信息
+          const errorMsg = `❌ ${data.error || '请求失败'}（错误码：${data.code || 'UNKNOWN'}）`;
+          addMessage('ai', errorMsg, '错误', true);
+          errorTips.textContent = `错误详情：${data.detail || data.error}`;
+          
+          // 打印详细错误到控制台
+          console.error('❌ 后端返回错误：', data);
+        }
+        
+      } catch (error) {
+        // 处理网络错误或其他异常
+        console.error('❌ 请求异常：', error);
+        
+        // 移除加载中消息
+        const loadingElements = document.querySelectorAll('.msg-item.loading');
+        if (loadingElements.length > 0) {
+          loadingElements[loadingElements.length - 1].remove();
+        }
+        
+        // 显示错误信息
+        let errorMsg = '';
+        if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+          errorMsg = '❌ 无法连接到后端服务器（跨域/网络问题）';
+          errorTips.textContent = '请检查：1.后端是否部署成功 2.跨域配置是否放行yuwangjie.cn 3.网络是否正常';
+        } else if (error.name === 'AbortError') {
+          errorMsg = '❌ 请求超时（超过30秒）';
+          errorTips.textContent = '后端响应过慢，请稍后重试';
+        } else {
+          errorMsg = `❌ 请求异常：${error.message}`;
+          errorTips.textContent = `异常详情：${error.stack || error.message}`;
+        }
+        
+        addMessage('ai', errorMsg, '错误', true);
+        
+      } finally {
+        // 重新启用发送按钮
+        sendBtn.disabled = false;
+        
+        // 滚动到底部
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }
+
+    // ========== 绑定事件 ==========
+    function bindEvents() {
+      // 发送按钮点击事件
+      sendBtn.addEventListener('click', sendMessage);
+      
+      // 输入框回车事件（Enter发送，Shift+Enter换行）
+      msgInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault(); // 阻止默认换行
+          sendMessage();
+        }
+      });
+      
+      // 窗口大小变化时滚动到底部
+      window.addEventListener('resize', () => {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      });
+    }
+
+    // ========== 页面加载完成后初始化 ==========
+    window.addEventListener('load', () => {
+      init();
+      bindEvents();
+    });
+  </script>
 </body>
 </html>
